@@ -1,15 +1,17 @@
+import { getCssText } from "@/styles";
+import { globalStyles } from "@/styles/global";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import { Roboto } from "next/font/google";
+import Image from "next/image";
+import logoImg from "@/assets/logo.svg"
+import { Container, Header } from "@/styles/pages/app";
+import { CartProvider } from "@/context/CartContext";
+import Modal from "@/components/cartModal";
+globalStyles()
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const roboto = Roboto({
+  subsets: ['latin'], 
+  weight: ['400', '700'], 
 });
 
 export const metadata: Metadata = {
@@ -23,9 +25,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+    <html lang="pt">
+      <head>
+          <style id="stitches" dangerouslySetInnerHTML={{__html: getCssText()}}></style>
+      </head>
+      <body className={`${roboto.className}`}>
+        <CartProvider>
+          <Container>
+            <Header>
+              <div>
+                <Image src={logoImg} alt={"logo da loja"} priority/>
+                <div>
+                  <strong>Ignite</strong>
+                  <span>shop</span>
+                </div>
+              </div>
+
+              <Modal/>
+            </Header>
+            {children}
+          </Container>
+        </CartProvider>
       </body>
     </html>
   );

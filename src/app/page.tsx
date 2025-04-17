@@ -1,95 +1,63 @@
+import { ButtonsProduct, Product, ProductsContainer } from "@/styles/pages/home";
 import Image from "next/image";
-import styles from "./page.module.css";
 
-export default function Home() {
+import "keen-slider/keen-slider.min.css"
+import { stripe } from "@/lib/stripe";
+import Slider from "@/components/slider";
+import Stripe from "stripe";
+import Link from "next/link";
+import AddToCartButton from "@/components/buttonAddCart";
+
+export default async function Home() {
+
+  const resolve = await stripe.products.list({
+    expand: ["data.default_price"],
+  })
+
+  const products = resolve.data.map(product => {
+    const price = product.default_price as Stripe.Price
+
+    return {
+      id: product.id,
+      name: product.name,
+      imageUrl: product.images[0],
+      priceDefault: price,
+      price: new Intl.NumberFormat('pt-br', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(price.unit_amount! / 100),
+    }
+  })
+
+  const productsFiltered = products.filter(product => product.id != 'prod_RbCDNqm4j7cCqD')
+  
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <Slider>
+      {productsFiltered.map(product => {
+        return(
+          <ProductsContainer key={product.id} className="keen-slider__slide">
+            <Link href={`/product/${product.id}`}>
+                <Product>
+                  <Image src={product.imageUrl} width={520} height={480} alt=""/> 
+    
+                  <footer>
+                    <strong>{product.name}</strong>
+                    <span>{product.price}</span>
+                  </footer>
+                </Product>
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+              </Link>
+
+              <ButtonsProduct>
+                {product.priceDefault.unit_amount !== null && 
+                <AddToCartButton id={product.id} name={product.name} price={product.priceDefault.unit_amount} priceId={product.priceDefault.id} imageUrl={product.imageUrl}/> }
+              </ButtonsProduct>
+          </ProductsContainer>
+            
+        )
+      })}
+    </Slider>
   );
 }
+
+export const revalidate = 7200;
